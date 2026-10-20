@@ -1,0 +1,101 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans:
+    'PingFang SC', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont,
+    'Segoe UI', sans-serif;
+  --color-background: #f6f7fb;
+  --color-foreground: #292b41;
+  --color-card: #ffffff;
+  --color-card-foreground: #292b41;
+  --color-primary: #7161c8;
+  --color-primary-foreground: #ffffff;
+  --color-primary-soft: #f0edfb;
+  --color-secondary: #f0f2f8;
+  --color-secondary-foreground: #50566c;
+  --color-muted: #f4f5f9;
+  --color-muted-foreground: #687084;
+  --color-border: #e6e8f1;
+  --color-input: #d5d9e5;
+  --color-ring: #7161c8;
+  --color-destructive: #bf4355;
+  --color-success: #2e765e;
+  --color-success-soft: #eaf5ef;
+  --color-warning: #8a641f;
+  --color-warning-soft: #fff7e6;
+  --color-math: #8774d9;
+  --color-science: #62a78b;
+  --color-english: #6399d7;
+  --color-history: #d1a052;
+  --color-social: #cc829c;
+  --color-life: #df996f;
+  --color-computing: #5aaeb9;
+  --color-learning: #8997b6;
+  --spacing-sidebar: 15rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.4rem;
+  --shadow-panel: 0 3px 18px -10px rgb(45 40 78 / 0.13);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  body {
+    margin: 0;
+    background: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  button,
+  a,
+  input,
+  textarea,
+  select {
+    -webkit-tap-highlight-color: transparent;
+  }
+  button:not(:disabled),
+  select,
+  summary {
+    cursor: pointer;
+  }
+  :focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--color-primary) 60%, transparent);
+    outline-offset: 3px;
+  }
+  input,
+  textarea {
+    accent-color: var(--color-primary);
+  }
+  ::selection {
+    background: #ddd5fa;
+  }
+  dialog::backdrop {
+    background: rgb(35 36 57 / 0.35);
+    backdrop-filter: blur(3px);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      scroll-behavior: auto !important;
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+  @media print {
+    [data-no-print] {
+      display: none !important;
+    }
+    body,
+    main {
+      background: white !important;
+      margin: 0 !important;
+    }
+    .print-break-avoid {
+      break-inside: avoid;
+    }
+  }
+}

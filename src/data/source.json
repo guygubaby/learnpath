@@ -1,0 +1,9 @@
+{
+  "repository": "https://github.com/withmarbleapp/os-taxonomy",
+  "commit": "ff9853306ba0c36a3e0045f43054f6039f62b0e5",
+  "taxonomyVersion": "v1",
+  "generatedAt": "2026-10-19T17:32:15.492Z",
+  "topics": 1591,
+  "dependencies": 3225,
+  "research": 1051
+}

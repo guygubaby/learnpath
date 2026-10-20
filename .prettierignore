@@ -1,0 +1,6 @@
+src/routeTree.gen.ts
+public/data/
+public/licenses/
+pnpm-lock.yaml
+.cloudflare/
+.data/
