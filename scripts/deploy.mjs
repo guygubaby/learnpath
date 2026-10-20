@@ -6,6 +6,7 @@ import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 
 config({ path: '.env.production', quiet: true })
+const ci = process.argv.includes('--ci')
 const origin = new URL(process.env.APP_URL ?? 'http://localhost')
 assert(
   origin.protocol === 'https:' &&
@@ -22,31 +23,40 @@ assert(
   /^[0-9a-f-]{36}$/i.test(process.env.CLOUDFLARE_D1_DATABASE_ID ?? ''),
   'Set CLOUDFLARE_D1_DATABASE_ID',
 )
-assert(
-  (process.env.BETTER_AUTH_SECRET ?? '').length >= 32,
-  'Set a strong BETTER_AUTH_SECRET',
-)
-assert(
-  Buffer.from(process.env.APP_ENCRYPTION_KEY ?? '', 'base64').length === 32,
-  'Set APP_ENCRYPTION_KEY to Base64-encoded 32 random bytes',
-)
+if (!ci)
+  assert(
+    (process.env.BETTER_AUTH_SECRET ?? '').length >= 32,
+    'Set a strong BETTER_AUTH_SECRET',
+  )
+if (!ci)
+  assert(
+    Buffer.from(process.env.APP_ENCRYPTION_KEY ?? '', 'base64').length === 32,
+    'Set APP_ENCRYPTION_KEY to Base64-encoded 32 random bytes',
+  )
 const run = (args) =>
   execFileSync('pnpm', args, { stdio: 'inherit', env: process.env })
-run(['exec', 'cf', 'workers', 'types'])
-run(['check'])
+if (!ci) {
+  run(['exec', 'cf', 'workers', 'types'])
+  run(['check'])
+}
 run(['db:remote'])
-const directory = await mkdtemp(join(tmpdir(), 'learnpath-secrets-'))
-try {
-  const path = join(directory, 'secrets.json')
-  await writeFile(
-    path,
-    JSON.stringify({
-      BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
-      APP_ENCRYPTION_KEY: process.env.APP_ENCRYPTION_KEY,
-    }),
-    { mode: 0o600 },
-  )
-  run(['exec', 'cf', 'deploy', '--prebuilt', '--secrets-file', path])
-} finally {
-  await rm(directory, { recursive: true, force: true })
+if (ci) {
+  // Workers Builds reuses runtime secrets already stored on the existing Worker.
+  run(['exec', 'cf', 'deploy', '--prebuilt'])
+} else {
+  const directory = await mkdtemp(join(tmpdir(), 'learnpath-secrets-'))
+  try {
+    const path = join(directory, 'secrets.json')
+    await writeFile(
+      path,
+      JSON.stringify({
+        BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
+        APP_ENCRYPTION_KEY: process.env.APP_ENCRYPTION_KEY,
+      }),
+      { mode: 0o600 },
+    )
+    run(['exec', 'cf', 'deploy', '--prebuilt', '--secrets-file', path])
+  } finally {
+    await rm(directory, { recursive: true, force: true })
+  }
 }

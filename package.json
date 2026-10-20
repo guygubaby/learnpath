@@ -21,6 +21,8 @@
     "db:local": "node scripts/migrate.mjs --local",
     "db:remote": "node scripts/migrate.mjs --remote",
     "deploy": "node scripts/deploy.mjs",
+    "build:ci": "pnpm cf:types && pnpm check",
+    "deploy:ci": "node scripts/deploy.mjs --ci",
     "cf:types": "cf workers types"
   },
   "dependencies": {
