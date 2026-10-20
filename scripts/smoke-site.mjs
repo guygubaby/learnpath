@@ -1,8 +1,12 @@
 import assert from 'node:assert/strict'
 const origin = process.env.APP_SMOKE_URL ?? 'http://127.0.0.1:3000'
-for (const locale of ['zh-CN', 'en']) {
+for (const preference of [undefined, 'zh-CN', 'en']) {
+  const locale = preference ?? 'zh-CN'
   const response = await fetch(new URL('/', origin), {
-    headers: { Cookie: `xuejing.locale=${locale}` },
+    headers: {
+      'Accept-Language': 'en-US,en;q=0.9',
+      ...(preference ? { Cookie: `xuejing.locale=${preference}` } : {}),
+    },
   })
   assert.equal(response.status, 200, 'Homepage must be public')
   const html = await response.text()
@@ -33,5 +37,5 @@ assert(
 )
 await video.body?.cancel()
 console.log(
-  'Marketing SSR, Chinese/English, workspace entry and product video passed.',
+  'Chinese default, explicit Chinese/English SSR, workspace entry and product video passed.',
 )

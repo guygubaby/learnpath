@@ -168,7 +168,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 className="min-h-11 max-w-28 text-xs sm:max-w-none"
               />
               <span className="hidden text-xs text-muted-foreground xl:inline">
-                {today.format(t('M 月 D 日'))}，
+                {today.format(t('M 月 D 日'))}
+                {locale === 'en' ? ', ' : '，'}
                 {
                   [
                     t('星期日'),

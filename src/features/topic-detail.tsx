@@ -111,11 +111,6 @@ export function TopicDetail({
         <h2 className="text-xl leading-snug font-semibold">
           {topicName(topic)}
         </h2>
-        {topicName(topic) !== topic.name && (
-          <p className="mt-2 text-xs leading-5 text-muted-foreground">
-            {topic.name}
-          </p>
-        )}
         <p className="mt-4 text-sm leading-7 text-muted-foreground">
           {content.description}
         </p>

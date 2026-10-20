@@ -82,9 +82,6 @@ export function LearnPage() {
           <h1 className="text-2xl leading-snug font-semibold">
             {topicName(topic)}
           </h1>
-          {topicName(topic) !== topic.name && (
-            <p className="mt-2 text-xs text-muted-foreground">{topic.name}</p>
-          )}
         </div>
       </div>
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_20rem]">

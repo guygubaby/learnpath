@@ -1,5 +1,7 @@
 {
   "Enter 发送，Shift + Enter 换行。": "Enter to send, Shift + Enter for a new line.",
+  "接口地址": "API Base URL",
+  "接口密钥": "API Key",
   "OpenAI 兼容": "OpenAI Compatible",
   "[图片说明：{{v0}}]": "[Image description: {{v0}}]",
   "[外部图片未自动加载]": "[External image did not load automatically]",

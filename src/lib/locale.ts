@@ -22,6 +22,6 @@ export function requestLocale(request: Request): Locale {
   return normalizeLocale(
     request.headers.get('x-app-locale') ??
       cookieLocale(request.headers.get('cookie') ?? '') ??
-      request.headers.get('accept-language'),
+      'zh-CN',
   )
 }

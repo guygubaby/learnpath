@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { createAppI18n } from '../src/lib/i18n'
 import { translateText, translations } from '../src/lib/i18n-core'
 import { cookieLocale, requestLocale } from '../src/lib/locale'
-import { ageLabel, topicName } from '../src/lib/labels'
+import { ageLabel, domainName, topicName } from '../src/lib/labels'
 import { starterQuestion } from '../src/lib/starter-questions'
 import { catalogSchema } from '../src/lib/contracts'
 import data from '../public/data/catalog.json'
@@ -41,6 +41,21 @@ describe('Chinese and English localization', () => {
   it('persists an explicit preference and prioritizes the app locale over browser headers', () => {
     expect(cookieLocale('other=value; xuejing.locale=en')).toBe('en')
     expect(cookieLocale('xuejing.locale=invalid')).toBeUndefined()
+    expect(requestLocale(new Request('https://app.test'))).toBe('zh-CN')
+    expect(
+      requestLocale(
+        new Request('https://app.test', {
+          headers: { 'accept-language': 'en-US,en;q=0.9' },
+        }),
+      ),
+    ).toBe('zh-CN')
+    expect(
+      requestLocale(
+        new Request('https://app.test', {
+          headers: { cookie: 'xuejing.locale=en', 'accept-language': 'zh-CN' },
+        }),
+      ),
+    ).toBe('en')
     expect(
       requestLocale(
         new Request('https://app.test', {
@@ -55,6 +70,16 @@ describe('Chinese and English localization', () => {
         }),
       ),
     ).toBe('en')
+  })
+  it('localizes every subject domain and preserves English when explicitly selected', () => {
+    for (const domain of new Set(data.topics.map((topic) => topic.domain))) {
+      expect(domainName(domain, 'zh-CN'), domain ?? 'cross-domain').toMatch(
+        /\p{Script=Han}/u,
+      )
+      if (domain) expect(domainName(domain, 'en')).toBe(domain)
+    }
+    expect(translateText('接口地址', 'zh-CN')).toBe('接口地址')
+    expect(translateText('接口密钥', 'en')).toBe('API Key')
   })
   it('retains every interpolation placeholder and keeps 学径 as the visible brand', () => {
     const placeholders = (value: string) =>

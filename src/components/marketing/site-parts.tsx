@@ -205,8 +205,8 @@ export function SiteHeader() {
               void setLocale(value === 'en' ? 'en' : 'zh-CN')
             }
             options={[
-              { value: 'zh-CN', label: '中文' },
-              { value: 'en', label: 'EN' },
+              { value: 'zh-CN', label: '简体中文' },
+              { value: 'en', label: 'English' },
             ]}
             className="min-h-10 rounded-full border-transparent bg-transparent px-2 text-xs"
           />

@@ -339,7 +339,7 @@ function ProviderForm({
       </fieldset>
       <Field
         id="ai-base-url"
-        label="API Base URL"
+        label={t('接口地址')}
         error={form.formState.errors.baseUrl?.message}
         hint={t(
           '填写完整的 HTTP 或 HTTPS 根地址，例如 http://api.example.com/v1',
@@ -375,7 +375,7 @@ function ProviderForm({
       </Field>
       <Field
         id="ai-key"
-        label="API Key"
+        label={t('接口密钥')}
         error={form.formState.errors.apiKey?.message}
         hint={
           settings?.hasKey
