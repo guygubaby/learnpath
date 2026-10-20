@@ -1,4 +1,5 @@
 {
+  "Enter 发送，Shift + Enter 换行。": "Enter to send, Shift + Enter for a new line.",
   "OpenAI 兼容": "OpenAI Compatible",
   "[图片说明：{{v0}}]": "[Image description: {{v0}}]",
   "[外部图片未自动加载]": "[External image did not load automatically]",

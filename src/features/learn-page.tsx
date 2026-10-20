@@ -377,13 +377,33 @@ function Tutor({ childId, topic }: { childId: string; topic: Topic }) {
             name="message"
             value={input}
             onChange={(event) => setInput(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key !== 'Enter' || event.shiftKey) return
+              event.preventDefault()
+              if (
+                event.nativeEvent.isComposing ||
+                // Safari may end composition before the confirming Enter arrives.
+                event.nativeEvent.keyCode === 229 ||
+                event.repeat ||
+                busy
+              )
+                return
+              event.currentTarget.form?.requestSubmit()
+            }}
+            enterKeyHint="send"
+            aria-describedby="tutor-message-hint"
             placeholder={t('把你的想法或问题写在这里…')}
             required
             maxLength={4000}
             className="min-h-24 text-sm"
           />
           <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-            <p className="text-[11px] leading-5 text-muted-foreground">
+            <p
+              id="tutor-message-hint"
+              className="text-[11px] leading-5 text-muted-foreground"
+            >
+              {t('Enter 发送，Shift + Enter 换行。')}
+              <br />
               {t('AI 可能出错，有疑问时请和家长一起核对。')}
             </p>
             {busy ? (
