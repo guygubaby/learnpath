@@ -349,7 +349,7 @@ function Tutor({ childId, topic }: { childId: string; topic: Topic }) {
               type="button"
               disabled={busy}
               onClick={() => {
-                setInput(question)
+                void send(question)
                 document.getElementById('tutor-message')?.focus()
               }}
               className="min-h-9 rounded-lg border px-3 py-2 text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary disabled:opacity-50"
