@@ -49,7 +49,7 @@ export function Select({
           position="popper"
           sideOffset={6}
           collisionPadding={12}
-          className="z-50 max-h-(--radix-select-content-available-height) max-w-(--radix-select-content-available-width) min-w-(--radix-select-trigger-width) overflow-hidden rounded-xl border border-primary/15 bg-card p-1.5 shadow-panel"
+          className="z-50 max-h-(--radix-select-content-available-height) w-(--radix-select-trigger-width) max-w-(--radix-select-content-available-width) min-w-32 overflow-hidden rounded-xl border border-primary/15 bg-card p-1.5 shadow-panel"
         >
           <SelectPrimitive.ScrollUpButton className="flex h-7 items-center justify-center text-primary">
             <ChevronUp className="size-4" />
@@ -60,7 +60,7 @@ export function Select({
                 key={option.value}
                 value={option.value}
                 disabled={option.disabled}
-                className="relative flex min-h-11 cursor-default items-center rounded-lg py-2 pr-9 pl-3 text-sm outline-none select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-40 data-[highlighted]:bg-primary-soft data-[highlighted]:text-primary data-[state=checked]:font-medium data-[state=checked]:text-primary"
+                className="relative flex min-h-11 cursor-default items-center rounded-lg py-2 pr-9 pl-3 text-sm wrap-anywhere outline-none select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-40 data-[highlighted]:bg-primary-soft data-[highlighted]:text-primary data-[state=checked]:font-medium data-[state=checked]:text-primary"
               >
                 <SelectPrimitive.ItemText>
                   {option.label}

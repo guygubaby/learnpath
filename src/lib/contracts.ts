@@ -118,6 +118,21 @@ export const providerSchema = z.object({
     .optional(),
 })
 export type ProviderInput = z.infer<typeof providerSchema>
+export const providerModelsInputSchema = providerSchema.omit({ model: true })
+export type ProviderModelsInput = z.infer<typeof providerModelsInputSchema>
+export const providerModelsResponseSchema = z.object({
+  models: z
+    .array(
+      z.object({
+        id: z.string().trim().min(1).max(200),
+        name: z.string().trim().min(1).max(500),
+      }),
+    )
+    .max(5000),
+})
+export type ProviderModelsResponse = z.infer<
+  typeof providerModelsResponseSchema
+>
 export const providerPublicSchema = providerSchema
   .omit({ apiKey: true })
   .extend({ hasKey: z.boolean(), updatedAt: z.string() })

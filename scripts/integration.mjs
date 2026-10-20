@@ -47,6 +47,17 @@ const email = `learnpath-${stamp}@example.test`
 assert.equal((await anonymous('/api/profiles')).status, 401)
 assert.equal(
   (
+    await anonymous('/api/settings/ai/models', 'POST', {
+      protocol: 'openai',
+      baseUrl: 'https://api.example.com/v1',
+      apiKey: 'synthetic-test-key',
+    })
+  ).status,
+  401,
+  'Model discovery must require authentication',
+)
+assert.equal(
+  (
     await parentA('/api/auth/sign-up/email', 'POST', {
       name: '本地测试家长',
       email,
@@ -128,6 +139,22 @@ assert(
   'API key leaked to client',
 )
 assert.equal((await parentB('/api/settings/ai')).data.settings, null)
+const otherModels = await parentB('/api/settings/ai/models', 'POST', {
+  protocol: 'openai',
+  baseUrl: 'https://api.example.com/v1',
+})
+assert.equal(otherModels.status, 400)
+assert.equal(
+  otherModels.data.error.code,
+  'KEY_REQUIRED',
+  'Model discovery must not reuse another account’s stored key',
+)
+const privateModels = await parentA('/api/settings/ai/models', 'POST', {
+  protocol: 'openai',
+  baseUrl: 'http://127.0.0.1/v1',
+})
+assert.equal(privateModels.status, 400)
+assert.equal(privateModels.data.error.code, 'INVALID_API_URL')
 assert.equal((await parentA('/api/settings/ai', 'DELETE')).status, 200)
 for (let index = 0; index < 3; index++) {
   const quizResponse = await parentA('/api/quizzes', 'POST', {

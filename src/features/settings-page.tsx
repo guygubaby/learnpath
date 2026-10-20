@@ -12,6 +12,7 @@ import {
   LoaderCircle,
   LockKeyhole,
   Plug,
+  RefreshCw,
   Save,
   Trash2,
 } from 'lucide-react'
@@ -19,6 +20,8 @@ import { toast } from 'sonner'
 import { authClient } from '@/lib/auth-client'
 import {
   providerSchema,
+  providerModelsInputSchema,
+  providerModelsResponseSchema,
   type ProviderInput,
   type ProviderPublic,
 } from '@/lib/contracts'
@@ -27,7 +30,7 @@ import { useLearning, useRefreshLearning } from '@/lib/queries'
 import { useUi } from '@/lib/store'
 import { AuthForm, ProfileForm } from '@/components/account-forms'
 import { Button, cn } from '@/components/ui/button'
-import { Field, Input } from '@/components/ui/fields'
+import { Field, Input, Select } from '@/components/ui/fields'
 import { Dialog } from '@/components/ui/dialog'
 import {
   ErrorState,
@@ -97,7 +100,7 @@ export function SettingsPage() {
               <SectionTitle
                 title={t('连接你的 AI 模型')}
                 description={t(
-                  '支持 OpenAI 和 Anthropic 风格的兼容接口，模型名称可自由填写。',
+                  '支持 OpenAI 和 Anthropic 风格的兼容接口，可获取模型列表或手动填写模型名称。',
                 )}
               />
               {query.isPending ? (
@@ -176,7 +179,7 @@ export function SettingsPage() {
                   <code className="rounded bg-muted px-1">/v1</code>
                   {t('，不包含 chat/completions 或 messages。')}
                 </li>
-                <li>{t('填写 API Key 和服务商提供的完整模型名称。')}</li>
+                <li>{t('填写接口密钥，再获取模型列表或手动填写模型名称。')}</li>
                 <li>{t('点击“保存并测试”，成功后就能开始对话与练习。')}</li>
               </ol>
             </Panel>
@@ -244,6 +247,8 @@ function ProviderForm({
   const { t, locale } = useI18n()
 
   const [visible, setVisible] = useState(false)
+  // Separate draft credentials in the cache without putting API keys in query keys.
+  const [keyRevision, setKeyRevision] = useState(() => crypto.randomUUID())
   const queryClient = useQueryClient()
   const form = useForm<ProviderInput>({
     resolver: zodResolver(providerSchema),
@@ -254,6 +259,56 @@ function ProviderForm({
       apiKey: '',
     },
   })
+  const [protocol, baseUrl, apiKey, model] = form.watch([
+    'protocol',
+    'baseUrl',
+    'apiKey',
+    'model',
+  ])
+  const models = useQuery({
+    queryKey: [
+      'private',
+      userId,
+      'provider-models',
+      protocol,
+      baseUrl.trim(),
+      apiKey ? keyRevision : (settings?.updatedAt ?? 'new'),
+    ],
+    enabled: Boolean(
+      settings?.hasKey &&
+      !apiKey &&
+      protocol === settings.protocol &&
+      baseUrl.trim() === settings.baseUrl,
+    ),
+    staleTime: 300_000,
+    retry: false,
+    queryFn: async ({ signal }) =>
+      providerModelsResponseSchema.parse(
+        await request(
+          '/api/settings/ai/models',
+          'POST',
+          providerModelsInputSchema.parse(form.getValues()),
+          signal,
+        ),
+      ),
+  })
+  async function loadModels() {
+    if (
+      !(await form.trigger(['protocol', 'baseUrl', 'apiKey'], {
+        shouldFocus: true,
+      }))
+    )
+      return
+    if (!apiKey?.trim() && !settings?.hasKey) {
+      form.setError(
+        'apiKey',
+        { message: t('首次配置需要填写 API Key') },
+        { shouldFocus: true },
+      )
+      return
+    }
+    await models.refetch()
+  }
   const mutation = useMutation({
     mutationFn: async ({
       input,
@@ -358,22 +413,6 @@ function ProviderForm({
         />
       </Field>
       <Field
-        id="ai-model"
-        label={t('模型名称')}
-        error={form.formState.errors.model?.message}
-      >
-        <Input
-          id="ai-model"
-          placeholder={t('填写服务商的模型 ID')}
-          autoComplete="off"
-          autoCapitalize="none"
-          spellCheck={false}
-          required
-          maxLength={200}
-          {...form.register('model')}
-        />
-      </Field>
-      <Field
         id="ai-key"
         label={t('接口密钥')}
         error={form.formState.errors.apiKey?.message}
@@ -394,6 +433,7 @@ function ProviderForm({
             spellCheck={false}
             autoCapitalize="none"
             required={!settings?.hasKey}
+            onInput={() => setKeyRevision(crypto.randomUUID())}
             className="pr-12"
             {...form.register('apiKey')}
           />
@@ -410,6 +450,83 @@ function ProviderForm({
               <Eye className="size-4" />
             )}
           </button>
+        </div>
+      </Field>
+      <Field
+        id="ai-model"
+        label={t('模型名称')}
+        error={form.formState.errors.model?.message}
+        hint={t('可从列表选择，也可手动填写；切换后点击“保存配置”生效。')}
+      >
+        <div className="space-y-3">
+          <div className="flex flex-wrap gap-2">
+            <Input
+              id="ai-model"
+              placeholder={t('填写服务商的模型 ID')}
+              autoComplete="off"
+              autoCapitalize="none"
+              spellCheck={false}
+              required
+              maxLength={200}
+              className="min-w-48 flex-1"
+              aria-describedby="ai-model-hint"
+              {...form.register('model')}
+            />
+            <Button
+              variant="outline"
+              disabled={models.isFetching || mutation.isPending}
+              onClick={() => void loadModels()}
+            >
+              {models.isFetching ? (
+                <LoaderCircle className="animate-spin" />
+              ) : (
+                <RefreshCw />
+              )}
+              {models.data ? t('刷新模型列表') : t('获取模型列表')}
+            </Button>
+          </div>
+          {models.isFetching ? (
+            <p role="status" className="text-xs text-muted-foreground">
+              {t('正在获取模型列表…')}
+            </p>
+          ) : models.isError ? (
+            <p role="alert" className="text-sm text-destructive">
+              {t(models.error.message)}
+            </p>
+          ) : models.data?.models.length ? (
+            <>
+              <Select
+                aria-label={t('从列表选择模型')}
+                placeholder={t('选择一个可用模型')}
+                value={
+                  models.data.models.some((item) => item.id === model)
+                    ? model
+                    : ''
+                }
+                onValueChange={(value) =>
+                  form.setValue('model', value, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  })
+                }
+                options={models.data.models.map((item) => ({
+                  value: item.id,
+                  label:
+                    item.name === item.id
+                      ? item.id
+                      : `${item.name} (${item.id})`,
+                }))}
+                className="w-full"
+              />
+              <p className="text-xs text-muted-foreground">
+                {t('可用模型：{{v0}}', { v0: models.data.models.length })}
+              </p>
+            </>
+          ) : models.data ? (
+            <p role="status" className="text-xs text-muted-foreground">
+              {t('服务商未返回可用模型，仍可手动填写模型名称。')}
+            </p>
+          ) : null}
         </div>
       </Field>
       {mutation.error && (

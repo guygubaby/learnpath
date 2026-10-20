@@ -4,14 +4,8 @@ import { validateProviderUrl } from './provider-security'
 
 export const MAX_OUTPUT_TOKENS = 128 * 1024
 
-export function configuredModel(
-  settings: {
-    protocol: 'openai' | 'anthropic'
-    baseUrl: string
-    model: string
-    apiKey: string
-    sessionId?: string
-  },
+export function providerFetch(
+  settings: { baseUrl: string; sessionId?: string },
   fetcher: typeof fetch = fetch,
 ) {
   const baseURL = validateProviderUrl(settings.baseUrl)
@@ -28,10 +22,23 @@ export function configuredModel(
     }
     return fetcher(input, { ...init, headers, redirect: 'manual' })
   }
+  return safeFetch
+}
+
+export function configuredModel(
+  settings: {
+    protocol: 'openai' | 'anthropic'
+    baseUrl: string
+    model: string
+    apiKey: string
+    sessionId?: string
+  },
+  fetcher: typeof fetch = fetch,
+) {
   const options = {
-    baseURL,
+    baseURL: validateProviderUrl(settings.baseUrl),
     apiKey: settings.apiKey,
-    fetch: safeFetch,
+    fetch: providerFetch(settings, fetcher),
   }
   return settings.protocol === 'anthropic'
     ? createAnthropic(options)(settings.model)

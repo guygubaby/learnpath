@@ -20,10 +20,12 @@ export async function request<T>(
   path: string,
   method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' = 'GET',
   body?: unknown,
+  signal?: AbortSignal,
 ): Promise<T> {
   try {
     return await http(path, {
       method,
+      signal,
       ...(body === undefined ? {} : { json: body }),
     }).json<T>()
   } catch (error) {

@@ -14,6 +14,7 @@
 - Better Auth 邮箱密码注册、登录、退出、修改密码；D1 Cookie Session；家长管理多个学习档案。
 - 根据必要先修关系生成目标路线；建议先修不阻止学习；掌握状态不会自动传递到其他知识点。
 - AI SDK 接入自定义 OpenAI Chat Completions / Anthropic Messages 兼容接口，支持公网 HTTP / HTTPS Base URL、自定义密钥和模型名；支持流式对话、连接测试、跟随界面语言生成练习。输出预算为 128 × 1024（131,072）tokens，不再限制回答为 16,000 字符；长请求不设固定生成时长。模型达到自身输出上限时会显示续答提示。
+- 设置页可获取或刷新服务商模型列表：沿配置的 Base URL 请求 `/models`（例如 `/v1/models`），支持已保存密钥、新密钥和 Anthropic 分页。选择模型后点击“保存配置”生效，列表不可用时仍能手动填写。
 - 服务端判题，答案提交前不返回正确选项；幂等提交；家长观察记录；按证据更新掌握状态。
 - 1、3、7、14、30 天复习安排、错题回顾、每日计划、真实学习报告和私有 R2 导出。
 - API Key 通过 AES-GCM 加密且绑定账号；权限检查、同源请求校验、请求体限制、原生短时限流与日志脱敏。应用不设每日 AI 调用次数上限。
@@ -49,7 +50,7 @@ Cloudflare Workers + Static Assets、D1 原生参数化 SQL、R2、Rate Limiting
 
 `.dev.vars`、本地数据库、测试账号均被 Git 忽略。`init:local` 不会覆盖已有密钥。注册自己的家长账号后创建档案，在“AI 与账号设置”配置 API。未配置 AI 时，部分数学和科学知识点可使用内置入门练习；AI 讲解和其他知识点的出题需要有效接口。
 
-对于 `opencode.ai` 接口，服务端会按其[客户端要求](https://opencode.ai/v2/docs/console/go/#where-can-i-use-it)发送应用标识和稳定的 `x-opencode-session`，覆盖连接测试、导师对话和出题。模型会话标识按账号与对话范围生成摘要。
+对于 `opencode.ai` 接口，服务端会按其[客户端要求](https://opencode.ai/v2/docs/console/go/#where-can-i-use-it)发送应用标识和稳定的 `x-opencode-session`，覆盖模型列表、连接测试、导师对话和出题。模型会话标识按账号与对话范围生成摘要。
 
 ## 校验
 

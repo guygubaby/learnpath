@@ -7,6 +7,7 @@ import {
   goalInputSchema,
   observationSchema,
   providerSchema,
+  providerModelsInputSchema,
   quizRequestSchema,
   quizAnswerSchema,
   questionContentSchema,
@@ -30,6 +31,7 @@ import { requestLocale } from '@/lib/locale'
 import { syncTaxonomy } from './taxonomy-sync'
 import {
   generateQuestion,
+  listProviderModels,
   publicProvider,
   saveProvider,
   storedProvider,
@@ -235,6 +237,14 @@ async function dispatch(request: Request): Promise<Response> {
     ])
     return json({ ok: true })
   }
+  if (path === '/api/settings/ai/models' && method === 'POST')
+    return json(
+      await listProviderModels(
+        userId,
+        await readBody(request, providerModelsInputSchema),
+        request,
+      ),
+    )
   if (path === '/api/settings/ai') {
     if (method === 'GET')
       return json({ settings: publicProvider(await storedProvider(userId)) })

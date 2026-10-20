@@ -1,10 +1,18 @@
 import { env } from 'cloudflare:workers'
 import { APICallError, generateText, streamText } from 'ai'
 import { createHash } from 'node:crypto'
-import { configuredModel, MAX_OUTPUT_TOKENS } from '@/lib/ai-model'
+import { z } from 'zod'
+import { joinURL, withQuery } from 'ufo'
+import {
+  configuredModel,
+  MAX_OUTPUT_TOKENS,
+  providerFetch,
+} from '@/lib/ai-model'
 import {
   questionContentSchema,
   type ProviderInput,
+  type ProviderModelsInput,
+  type ProviderModelsResponse,
   type ProviderPublic,
 } from '@/lib/contracts'
 import { openKey, sealKey, validateProviderUrl } from '@/lib/provider-security'
@@ -70,6 +78,120 @@ export async function saveProvider(userId: string, input: ProviderInput) {
     new Date().toISOString(),
   )
   return publicProvider(await storedProvider(userId))
+}
+
+const modelPageSchema = z.object({
+  data: z
+    .array(
+      z.object({
+        id: z.string().trim().min(1).max(200),
+        display_name: z.string().trim().max(500).nullish(),
+        name: z.string().trim().max(500).nullish(),
+      }),
+    )
+    .max(5000),
+  has_more: z.boolean().optional(),
+  last_id: z.string().min(1).max(200).nullish(),
+})
+
+export async function listProviderModels(
+  userId: string,
+  input: ProviderModelsInput,
+  request: Request,
+): Promise<ProviderModelsResponse> {
+  let baseUrl: string
+  try {
+    baseUrl = validateProviderUrl(input.baseUrl)
+  } catch (error) {
+    throw new HttpError(
+      400,
+      'INVALID_API_URL',
+      error instanceof Error ? error.message : 'API 地址无效',
+    )
+  }
+  const stored = input.apiKey ? undefined : await storedProvider(userId)
+  if (!input.apiKey && !stored?.encrypted_key)
+    throw new HttpError(400, 'KEY_REQUIRED', '首次配置需要填写 API Key')
+  const apiKey =
+    input.apiKey ||
+    (await openKey(stored!.encrypted_key, env.APP_ENCRYPTION_KEY, userId))
+  const fetcher = providerFetch({
+    baseUrl,
+    sessionId: createHash('sha256')
+      .update(`learnpath:${userId}:model-list`)
+      .digest('hex'),
+  })
+  const headers: HeadersInit =
+    input.protocol === 'anthropic'
+      ? { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' }
+      : { Authorization: `Bearer ${apiKey}` }
+  const signal = AbortSignal.any([request.signal, AbortSignal.timeout(20_000)])
+  const models = new Map<string, ProviderModelsResponse['models'][number]>()
+  const cursors = new Set<string>()
+  let cursor: string | undefined
+  let receivedBytes = 0
+  try {
+    for (let pageIndex = 0; pageIndex < 50; pageIndex++) {
+      const response = await fetcher(
+        withQuery(joinURL(baseUrl, 'models'), {
+          ...(input.protocol === 'anthropic' ? { limit: 100 } : {}),
+          ...(cursor ? { after_id: cursor } : {}),
+        }),
+        { headers, signal },
+      )
+      if (!response.ok) {
+        await response.body?.cancel()
+        throw new HttpError(
+          502,
+          'MODELS_UNAVAILABLE',
+          translateText(
+            '获取模型列表失败（HTTP {{status}}），请检查接口地址、密钥和服务商状态。',
+            requestLocale(request),
+            { status: response.status },
+          ),
+        )
+      }
+      if (!response.body) throw new Error('Missing model list')
+      const decoder = new TextDecoder()
+      let text = ''
+      for await (const chunk of response.body) {
+        receivedBytes += chunk.length
+        if (receivedBytes > 2 * 1024 * 1024)
+          throw new HttpError(
+            502,
+            'MODELS_TOO_LARGE',
+            '模型列表过大，请手动填写模型名称。',
+          )
+        text += decoder.decode(chunk, { stream: true })
+      }
+      const page = modelPageSchema.parse(JSON.parse(text + decoder.decode()))
+      for (const model of page.data)
+        if (!models.has(model.id))
+          models.set(model.id, {
+            id: model.id,
+            name: model.display_name || model.name || model.id,
+          })
+      if (models.size > 5000)
+        throw new HttpError(
+          502,
+          'MODELS_TOO_LARGE',
+          '模型列表过大，请手动填写模型名称。',
+        )
+      if (!page.has_more) return { models: [...models.values()] }
+      if (!page.last_id || cursors.has(page.last_id))
+        throw new Error('Invalid model pagination')
+      cursor = page.last_id
+      cursors.add(cursor)
+    }
+    throw new Error('Model pagination limit exceeded')
+  } catch (error) {
+    if (error instanceof HttpError) throw error
+    throw new HttpError(
+      502,
+      'MODELS_UNAVAILABLE',
+      '服务商未返回有效的模型列表，可重试或手动填写模型名称。',
+    )
+  }
 }
 
 async function enforceAiRateLimit(userId: string) {
