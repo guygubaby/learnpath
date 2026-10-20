@@ -66,3 +66,13 @@ Vite 对约 532 kB 的入口 JS 发出体积提示（gzip 约 166 kB），并报
 最后一次验证：线上研究归档全部成功，激活版本对应上游 `ff9853306ba0c36a3e0045f43054f6039f62b0e5`；研究哈希 `4098ce14adbe8da767a3ab972959cfede2d1c821974abca752ce2822f8fb77e4`。归档耗时约 166 秒。研究下载使用整次 14 分钟任务期限，R2 写入跨网络分块维持最多四条并发；完成后验证研究与来源许可返回 200、重复检查返回 unchanged。新增并发批处理回归后共 48 项测试。临时解密的模型配置和用户提供的诊断会话已清理。
 
 最终部署版本：`0c841b34-0bde-4848-bcb1-8b085be6ea82`；类型检查、48 项测试与生产构建通过，Cron 注册 `0 16 * * *`。
+
+## 官网与 Git 自动部署
+
+仓库 `https://github.com/guygubaby/learnpath` 已推送到 main。Cloudflare Workers Builds 原生连接同一仓库，监听 main，关闭分支预览；使用已有 GitHub 连接与 build token，没有新增个人 API token。Build 使用 `pnpm run build:ci`，Deploy 使用 `pnpm run deploy:ci`。生产 secrets 保持在现有 Worker 中，构建过程不读取或复制本地密钥文件。
+
+首次代码推送 `5ddeb06` 的 GitHub 检查 `Workers Builds: learnpath` 已 completed/success；Build ID `cb138408-7ebc-4bb7-aa36-cea22b548a8f`，Worker 版本 `2412bb51-d8d4-455c-85ef-e2a5fb72f8da`。这次发布由 Git 触发，未运行本机手动 deploy。
+
+官网 `/` 独立于 `/app` 学习概览，原有知识地图、学习记录与账号路由保留。默认官网中英 SSR、站点语言、工作台链接和实际视频文件已通过本地与正式 HTTPS 冒烟检查；健康检查仍为 1,591 个知识点，匿名认证会话接口返回 200/null。50 项测试与生产构建通过。新增测试检查 CI 保留运行时 secrets、拒绝错误的部署 origin，以及中文分词标点不被拆到独立行。
+
+浏览器检查详见 `docs/landing-motion.md`：首屏与返回官网的词位移、下方白色遮罩与旧页抬升、正常工作台导航、快速返回取消旧导航、FAQ 开合与反向、手机菜单与 Escape、视频离屏暂停与演示弹窗、运行中减少动态偏好、滚动卡片正反向、卡片内外缩放与情境指针。没有做 Safari 真机、屏幕阅读器或性能评分认证。

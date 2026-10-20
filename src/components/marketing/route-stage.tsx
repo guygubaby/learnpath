@@ -9,6 +9,8 @@ export const useRouteEntryReady = () => useContext(EntryContext)
 type Transition = {
   animations: Animation[]
   scroll: string
+  cancelled: boolean
+  covered: boolean
   timer?: ReturnType<typeof setTimeout>
 }
 
@@ -49,17 +51,22 @@ export function RouteStage({ children }: { children: React.ReactNode }) {
   useBlocker({
     enableBeforeUnload: false,
     shouldBlockFn: async ({ current, next }) => {
+      if (active.current) {
+        active.current.cancelled = true
+        release()
+      }
       if (
         current.pathname === next.pathname ||
         (current.pathname !== '/' && next.pathname !== '/') ||
         reduce
       )
         return false
-      if (active.current) return true
       if (!page.current || !fill.current || !shade.current) return false
       const job: Transition = {
         animations: [],
         scroll: document.documentElement.style.overflow,
+        cancelled: false,
+        covered: false,
       }
       active.current = job
       document.documentElement.style.overflow = 'hidden'
@@ -99,9 +106,10 @@ export function RouteStage({ children }: { children: React.ReactNode }) {
       try {
         await cover.finished
       } catch {
-        return false
+        return job.cancelled
       }
-      if (active.current !== job) return false
+      if (active.current !== job) return job.cancelled
+      job.covered = true
       setPhase('covered')
       return false
     },
@@ -112,6 +120,11 @@ export function RouteStage({ children }: { children: React.ReactNode }) {
       router.subscribe('onResolved', () => {
         const job = active.current
         if (!job || !fill.current) return
+        if (!job.covered) {
+          job.cancelled = true
+          release()
+          return
+        }
         requestAnimationFrame(() => {
           if (active.current !== job || !fill.current || !page.current) return
           for (const animation of job.animations)
