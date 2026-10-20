@@ -23,7 +23,8 @@
     "deploy": "node scripts/deploy.mjs",
     "build:ci": "pnpm cf:types && pnpm check",
     "deploy:ci": "node scripts/deploy.mjs --ci",
-    "cf:types": "cf workers types"
+    "cf:types": "cf workers types",
+    "test:site": "node scripts/smoke-site.mjs"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "4.0.83",

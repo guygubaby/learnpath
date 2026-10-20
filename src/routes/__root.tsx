@@ -3,10 +3,12 @@ import {
   HeadContent,
   Outlet,
   Scripts,
+  useRouterState,
 } from '@tanstack/react-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'sonner'
 import { AppShell } from '@/components/app-shell'
+import { RouteStage } from '@/components/marketing/route-stage'
 import styles from '@/styles.css?url'
 import { I18nextProvider } from 'react-i18next'
 import type { i18n } from 'i18next'
@@ -18,6 +20,7 @@ export const Route = createRootRouteWithContext<{
   queryClient: QueryClient
   i18n: i18n
 }>()({
+  ssr: true,
   head: () => ({
     meta: [
       { charSet: 'utf-8' },
@@ -44,7 +47,7 @@ export const Route = createRootRouteWithContext<{
       <h1 className="text-2xl font-semibold">
         {translateText('这条小径还没有开通', initialLocale())}
       </h1>
-      <a className="mt-4 inline-block text-primary underline" href="/">
+      <a className="mt-4 inline-block text-primary underline" href="/app">
         {translateText('回到学习概览', initialLocale())}
       </a>
     </div>
@@ -69,13 +72,22 @@ export const Route = createRootRouteWithContext<{
 
 function Root() {
   const { queryClient, i18n } = Route.useRouteContext()
+  const pathname = useRouterState({
+    select: (state) => state.location.pathname,
+  })
   return (
     <I18nextProvider i18n={i18n}>
       <LocaleDocument />
       <QueryClientProvider client={queryClient}>
-        <AppShell>
-          <Outlet />
-        </AppShell>
+        <RouteStage>
+          {pathname === '/' ? (
+            <Outlet />
+          ) : (
+            <AppShell>
+              <Outlet />
+            </AppShell>
+          )}
+        </RouteStage>
         <Toaster richColors position="top-center" />
       </QueryClientProvider>
     </I18nextProvider>

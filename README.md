@@ -2,9 +2,11 @@
 
 一个基于 Marble 开放知识图谱的学习工作台。探索八个学科的真实知识点，通过目标路线、AI 讲解、练习证据和复习记录，形成完整学习流程。
 
-线上地址：<https://learnpath.guygubaby.top>。前端、API、账号与学习数据部署在 Cloudflare Workers / D1 / R2。
+官网：<https://learnpath.guygubaby.top>；学习工作台：<https://learnpath.guygubaby.top/app>。前端、API、账号与学习数据部署在 Cloudflare Workers / D1 / R2。
 
 ## 已实现
+
+- 独立的中英双语产品官网；点击“开始使用”进入学习工作台。官网采用 Cuberto 风格的留白、遮罩文字、错落作品列与白色页面转场，使用本项目自己的图形和演示素材。
 
 - 1,591 个知识点、3,225 条先修关系；按学科、年龄、中英文关键词搜索，支持局部图、学科全景与可访问列表。
 - 简体中文 / English 切换，语言偏好持久保存；1,591 个知识点的名称、说明、掌握标准和检查问题提供完整中文翻译，英文原文保留。所有下拉框统一使用 Radix Select，支持键盘操作。
@@ -24,7 +26,7 @@ Cloudflare Workers + Static Assets、D1 原生参数化 SQL、R2、Rate Limiting
 
 ## 本地运行
 
-需要 Node.js 24.11+ 和 pnpm。此机器验证使用的 Node 为 `/Users/bryceloskie/Library/Caches/fnm_multishells/41098_1779758644280/bin/node`。
+需要 Node.js 24.11+ 和 pnpm。推荐使用 `.node-version` 中指定的版本。
 
 1. 安装并创建本地密钥：
 
@@ -63,9 +65,17 @@ pnpm test:integration
 
 集成测试会在本地创建独立测试账号，验证账号隔离、会话、档案、目标、密钥隐藏、判题、重复提交、CSRF 与私有 R2 报告导出。它不会连接生产数据库。浏览器测试账号仅保存在被忽略的 `.data/` 中。
 
-## Cloudflare 部署
+## Cloudflare 自动部署
 
-项目使用新的 Cloudflare CLI `cf` 和 `cloudflare.config.ts`；Vite 插件目前使用 Cloudflare CLI 所需的 2.0 beta 版本，版本已由锁文件固定。
+代码仓库：[guygubaby/learnpath](https://github.com/guygubaby/learnpath)。现有 Worker 使用 Cloudflare Workers Builds 原生连接 GitHub；推送 `main` 会自动构建和发布，不依赖本机运行命令。
+
+- 构建命令：`pnpm run build:ci`，包含绑定类型生成、TypeScript、全部测试与生产构建。
+- 部署命令：`pnpm run deploy:ci`，先应用未执行的 D1 迁移，再上传已构建 Worker，沿用已存在的运行时 secrets。
+- Node 版本由 `.node-version` 固定，pnpm 版本由 `packageManager` 固定。
+- Build 变量：`APP_URL`、`CLOUDFLARE_ACCOUNT_ID`、`CLOUDFLARE_D1_DATABASE_ID`、`TAXONOMY_OWNER_ID`。这些是部署目标配置；不要把生产会话密钥或加密密钥放入仓库。
+- `BETTER_AUTH_SECRET` 与 `APP_ENCRYPTION_KEY` 保留在 Worker 的 Runtime variables and secrets 中，CI 不复制或重建它们。当前只监听 `main`，未启用分支预览。
+
+首次在其他 Cloudflare 账户初始化，或需要手动恢复部署时，可使用以下流程。项目继续使用锁定版本的 Cloudflare CLI `cf` 与 `cloudflare.config.ts`。
 
 1. 完成 Cloudflare 登录：
 

@@ -25,7 +25,7 @@ import { Select } from './ui/select'
 import { AuthDialog, ProfileDialog } from './account-forms'
 
 const navigation = [
-  { to: '/', label: '学习概览', icon: House },
+  { to: '/app', label: '学习概览', icon: House },
   { to: '/map', label: '知识地图', icon: Map },
   { to: '/plan', label: '学习计划', icon: Compass },
   { to: '/review', label: '练习与复习', icon: RotateCcw },
@@ -260,6 +260,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </header>
         <main
           id="main-content"
+          tabIndex={-1}
           className="mx-auto max-w-screen-2xl px-5 py-7 sm:px-8 sm:py-9 xl:px-10"
         >
           {children}
