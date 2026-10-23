@@ -3,6 +3,7 @@ import { z } from 'zod'
 import {
   catalogSchema,
   topicTranslationSchema,
+  type Topic,
   type TopicTranslation,
 } from '@/lib/contracts'
 import {
@@ -171,9 +172,7 @@ export async function syncTaxonomy(force = false) {
         env.TAXONOMY_OWNER_ID,
         'taxonomy-translation',
       )
-      for (let offset = 0; offset < missing.length; offset += 6) {
-        deadline.throwIfAborted()
-        const batch = missing.slice(offset, offset + 6)
+      const translateBatch = async (batch: Topic[]) => {
         const translated = await translateTopics(batch, model, deadline)
         for (const topic of batch) {
           const value = translated[topic.id]
@@ -184,6 +183,20 @@ export async function syncTaxonomy(force = false) {
             jsonOptions,
           )
         }
+      }
+      for (let offset = 0; offset < missing.length; offset += 24) {
+        deadline.throwIfAborted()
+        const jobs: Promise<void>[] = []
+        for (
+          let start = offset;
+          start < Math.min(offset + 24, missing.length);
+          start += 6
+        )
+          jobs.push(translateBatch(missing.slice(start, start + 6)))
+        // Finish sibling cache writes before releasing the lease after a failed batch.
+        const results = await Promise.allSettled(jobs)
+        const failed = results.find((result) => result.status === 'rejected')
+        if (failed?.status === 'rejected') throw failed.reason
       }
     }
 
