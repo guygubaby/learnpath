@@ -28,6 +28,7 @@ import {
 } from './repository'
 import { getTaxonomy, getResearch, getTopic, taxonomyState } from './taxonomy'
 import { requestLocale } from '@/lib/locale'
+import { taxonomySummary } from '@/lib/taxonomy-summary'
 import { syncTaxonomy } from './taxonomy-sync'
 import {
   generateQuestion,
@@ -90,7 +91,7 @@ async function dispatch(request: Request): Promise<Response> {
     return json({
       ok: true,
       taxonomyVersion: catalog.version,
-      topics: catalog.topics.filter((topic) => !topic.retired).length,
+      ...taxonomySummary(catalog),
       revision: catalog.source?.commit,
     })
   }

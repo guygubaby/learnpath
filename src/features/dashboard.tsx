@@ -255,7 +255,7 @@ export function Dashboard() {
           <Panel>
             <SectionTitle
               title={t('世界很大，好奇心可以去很多地方')}
-              description={t('探索八个学科，找到今天想问的问题。')}
+              description={t('探索各个学科，找到今天想问的问题。')}
             />
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
               {subjects.slice(0, 4).map((subject) => {

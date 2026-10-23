@@ -5,6 +5,7 @@ export const subjects = [
   'Science',
   'English',
   'History',
+  'Geography',
   'Computing',
   'Life Skills',
   'Personal & Social Development',
@@ -61,6 +62,11 @@ export const catalogSchema = z.object({
 export type Topic = z.infer<typeof topicSchema>
 export type Dependency = z.infer<typeof dependencySchema>
 export type Catalog = z.infer<typeof catalogSchema>
+export const taxonomySummarySchema = z.object({
+  topics: z.number().int().nonnegative(),
+  dependencies: z.number().int().nonnegative(),
+  subjects: z.number().int().nonnegative(),
+})
 
 export const profileInputSchema = z.object({
   nickname: z

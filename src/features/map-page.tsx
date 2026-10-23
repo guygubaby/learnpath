@@ -5,6 +5,7 @@ import { useLearning } from '@/lib/queries'
 import { subjects, type Topic } from '@/lib/contracts'
 import { ageLabel, domainName, subjectMeta, topicName } from '@/lib/labels'
 import { neighborhood } from '@/lib/graph'
+import { taxonomySummary } from '@/lib/taxonomy-summary'
 import { KnowledgeGraph } from '@/components/knowledge-graph'
 import { Button, cn } from '@/components/ui/button'
 import { Select } from '@/components/ui/select'
@@ -26,6 +27,7 @@ export function MapPage() {
   if (query.error)
     return <ErrorState error={query.error} retry={() => query.refetch()} />
   const { catalog, graph } = query.data
+  const summary = taxonomySummary(catalog)
   const q = search.q.toLowerCase().trim()
   const filtered = catalog.topics.filter(
     (topic) =>
@@ -70,8 +72,10 @@ export function MapPage() {
         )}
       >
         <span className="rounded-lg border bg-card px-3 py-2 text-xs text-muted-foreground">
-          {catalog.topics.length.toLocaleString()}
-          {t(' 个知识点 · 8 个学科')}
+          {t('{{v0}} 个知识点 · {{v1}} 个学科', {
+            v0: summary.topics.toLocaleString(locale),
+            v1: summary.subjects,
+          })}
         </span>
       </PageHeading>
       <div className="mb-5 flex flex-wrap items-center gap-3">

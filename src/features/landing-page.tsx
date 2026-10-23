@@ -18,7 +18,7 @@ import {
   Sparkles,
 } from 'lucide-react'
 import { useI18n } from '@/lib/i18n'
-import source from '@/data/source.json'
+import { Route } from '@/routes/index'
 import { cn } from '@/components/ui/button'
 import {
   ContextCursor,
@@ -170,6 +170,7 @@ function ServiceCard({
 
 export function LandingPage() {
   const { t, locale } = useI18n()
+  const summary = Route.useLoaderData()
   const heroSize = locale === 'en' ? 'text-site-hero-en' : 'text-site-hero'
   const cards = [
     {
@@ -221,7 +222,7 @@ export function LandingPage() {
     [
       t('内容适合中国小学的教材吗？'),
       t(
-        '图谱覆盖小学阶段的八个学科，并提供简体中文翻译，但来源包含英美等课程标准，尚未逐一对应中国教材与年级。年龄只作参考，可以根据孩子的实际理解选择内容。',
+        '图谱覆盖小学阶段的多个学科，并提供简体中文翻译，但来源包含英美等课程标准，尚未逐一对应中国教材与年级。年龄只作参考，可以根据孩子的实际理解选择内容。',
       ),
     ],
     [
@@ -288,7 +289,9 @@ export function LandingPage() {
               </a>
             </Reveal>
             <div className="mt-12 flex flex-wrap items-center gap-x-6 gap-y-3 text-xs text-site-muted md:mt-15 md:justify-center">
-              <span>{t('八个学科，一张地图')}</span>
+              <span>
+                {t('{{v0}} 个学科，一张地图', { v0: summary.subjects })}
+              </span>
               <span className="h-3 border-l" />
               <span>{t('中文 / English')}</span>
               <span className="h-3 border-l" />
@@ -374,14 +377,17 @@ export function LandingPage() {
             <Reveal className="mt-16 grid grid-cols-3 gap-4 border-t pt-9 md:mt-22">
               {[
                 {
-                  value: source.topics.toLocaleString(),
+                  value: summary.topics.toLocaleString(locale),
                   label: t('真实知识点'),
                 },
                 {
-                  value: source.dependencies.toLocaleString(),
+                  value: summary.dependencies.toLocaleString(locale),
                   label: t('先修连接'),
                 },
-                { value: '08', label: t('值得探索的学科') },
+                {
+                  value: String(summary.subjects).padStart(2, '0'),
+                  label: t('值得探索的学科'),
+                },
               ].map((item) => (
                 <div key={item.label}>
                   <p className="text-site-metric font-medium tracking-[-.06em] tabular-nums">
@@ -409,7 +415,7 @@ export function LandingPage() {
               />
               <p className="max-w-xs text-sm leading-7 text-white/55">
                 {t(
-                  '数学、科学、英语、历史、计算机、生活技能、个人与社会发展、学会学习。好奇心有很多种方向。',
+                  '数学、科学、英语、历史、地理、计算机、生活技能、个人与社会发展、学会学习。好奇心有很多种方向。',
                 )}
               </p>
             </div>

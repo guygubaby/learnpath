@@ -40,6 +40,28 @@ function chunks(value: string, size = 7) {
 }
 
 describe('taxonomy snapshot validation', () => {
+  it('accepts the upstream Geography subject and preserves its prerequisite relationships', () => {
+    const geography = {
+      ...topic('mt_fXE9t2ETGx'),
+      subject: 'Geography',
+      domain: 'Maps & Spatial Skills',
+      name: 'Picture maps of familiar places',
+    }
+    const result = validateCatalog({
+      version: 'v1',
+      topics: [topic('mt_foundation'), geography],
+      dependencies: [edge(geography.id, 'mt_foundation')],
+    })
+    expect(result.topics[1].subject).toBe('Geography')
+    expect(result.dependencies).toEqual([edge(geography.id, 'mt_foundation')])
+    expect(() =>
+      validateCatalog({
+        ...result,
+        topics: [{ ...geography, subject: 'Unsupported subject' }],
+        dependencies: [],
+      }),
+    ).toThrow()
+  })
   it('keeps four writes in flight across small network chunks and awaits failures before returning', async () => {
     const records = Array.from({ length: 8 }, (_, index) => ({
       topicId: `mt_${index}`,

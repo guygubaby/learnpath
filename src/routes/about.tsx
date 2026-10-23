@@ -5,6 +5,7 @@ import { useLearning } from '@/lib/queries'
 import { useQuery } from '@tanstack/react-query'
 import { request } from '@/lib/api-client'
 import { localDate } from '@/lib/learning'
+import { bundledTaxonomySummary, taxonomySummary } from '@/lib/taxonomy-summary'
 import { z } from 'zod'
 import { Panel, PageHeading } from '@/components/shared'
 
@@ -13,6 +14,9 @@ function About() {
   const { t, locale } = useI18n()
   const { catalog } = useLearning()
   const source = catalog.data?.catalog.source ?? bundledSource
+  const summary = catalog.data
+    ? taxonomySummary(catalog.data.catalog)
+    : bundledTaxonomySummary
   const sync = useQuery({
     queryKey: ['taxonomy-status'],
     queryFn: async () =>
@@ -47,10 +51,11 @@ function About() {
           <h2 className="text-lg font-semibold">{t('开放的知识地图')}</h2>
           <p className="mt-2 text-muted-foreground">
             {t(
-              '学径基于 Marble Skill Taxonomy，包含 {{v0}} 个知识点、{{v1}} 条先修关系、8 个学科。年龄范围用于参考，不等同于中国小学年级或特定教材。',
+              '学径基于 Marble Skill Taxonomy，包含 {{v0}} 个知识点、{{v1}} 条先修关系、{{v2}} 个学科。年龄范围用于参考，不等同于中国小学年级或特定教材。',
               {
-                v0: source.topics.toLocaleString(),
-                v1: source.dependencies.toLocaleString(),
+                v0: summary.topics.toLocaleString(locale),
+                v1: summary.dependencies.toLocaleString(locale),
+                v2: summary.subjects,
               },
             )}
           </p>

@@ -55,6 +55,7 @@ export async function syncTaxonomy(force = false) {
     }
     return response
   }
+  let stage = 'source-reference'
   try {
     // Read the public Git reference directly; the shared edge IP can exhaust GitHub's unauthenticated REST quota.
     const refs = await fetchSource(
@@ -77,6 +78,7 @@ export async function syncTaxonomy(force = false) {
     }
     const rawUrl = (name: string) =>
       `https://raw.githubusercontent.com/${repository}/${sha}/${name}`
+    stage = 'manifest'
     const manifestResponse = await fetchSource(rawUrl('data/manifest.json'))
     if (!manifestResponse.ok) throw new SyncError('UPSTREAM_UNAVAILABLE')
     // The manifest is small; larger data files have explicit byte limits and checksums below.
@@ -86,6 +88,7 @@ export async function syncTaxonomy(force = false) {
     for (const name of upstreamFiles.filter(
       (name) => name !== 'teaching-research.json',
     )) {
+      stage = `download:${name}`
       deadline.throwIfAborted()
       const bytes = await verifiedBytes(
         await fetchSource(rawUrl(`data/${name}`)),
@@ -98,12 +101,15 @@ export async function syncTaxonomy(force = false) {
         jsonOptions,
       )
     }
+    stage = 'topics'
     const topicsFile = z
       .object({ topics: catalogSchema.shape.topics })
       .parse(files.get('topics.json'))
+    stage = 'dependencies'
     const dependenciesFile = z
       .object({ dependencies: catalogSchema.shape.dependencies })
       .parse(files.get('dependencies.json'))
+    stage = 'catalog'
     const current = validateCatalog({
       version: manifest.taxonomyVersion,
       ...topicsFile,
@@ -114,6 +120,7 @@ export async function syncTaxonomy(force = false) {
       current.dependencies.length !== manifest.counts.dependencies
     )
       throw new SyncError('CATALOG_COUNT_MISMATCH')
+    stage = 'curriculum-standards'
     z.object({
       curricula: z.array(
         z
@@ -125,6 +132,7 @@ export async function syncTaxonomy(force = false) {
           .passthrough(),
       ),
     }).parse(files.get('curriculum-standards.json'))
+    stage = 'clusters'
     z.object({
       clusters: z.array(
         z
@@ -137,6 +145,7 @@ export async function syncTaxonomy(force = false) {
       ),
     }).parse(files.get('clusters.json'))
 
+    stage = 'translations'
     const translations = new Map<string, TopicTranslation>()
     for (const topic of previous.catalog.topics) {
       const translated = topic.translations?.['zh-CN']
@@ -178,6 +187,7 @@ export async function syncTaxonomy(force = false) {
       }
     }
 
+    stage = 'teaching-research'
     const researchIntegrity = manifest.files['teaching-research.json']
     const topicIds = new Set(current.topics.map((topic) => topic.id))
     const researchRevision = researchIntegrity.sha256
@@ -223,6 +233,7 @@ export async function syncTaxonomy(force = false) {
         jsonOptions,
       )
     }
+    stage = 'licenses'
     for (const name of [
       'LICENSE',
       'LICENSE-CONTENT',
@@ -234,6 +245,7 @@ export async function syncTaxonomy(force = false) {
       const text = await limitedText(license, 256_000)
       await env.TAXONOMY.put(`snapshots/${snapshotId}/licenses/${name}`, text)
     }
+    stage = 'publish'
     const syncedAt = new Date().toISOString()
     current.source = {
       repository: `https://github.com/${repository}`,
@@ -295,7 +307,15 @@ export async function syncTaxonomy(force = false) {
       .bind(code, lease)
       .run()
     logger.error(
-      { code, errorType: error instanceof Error ? error.name : 'Unknown' },
+      {
+        code,
+        stage,
+        errorType: error instanceof Error ? error.name : 'Unknown',
+        issues:
+          error instanceof z.ZodError
+            ? error.issues.slice(0, 5).map(({ code, path }) => ({ code, path }))
+            : undefined,
+      },
       'Taxonomy synchronization failed; current snapshot retained',
     )
     throw new SyncError(code)

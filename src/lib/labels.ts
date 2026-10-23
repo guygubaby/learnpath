@@ -3,6 +3,7 @@ import {
   FlaskConical,
   BookOpen,
   Landmark,
+  Globe,
   Monitor,
   HeartHandshake,
   Sprout,
@@ -41,6 +42,13 @@ export const subjectMeta = {
     soft: '#faf4e8',
     description: '理解过去，连接今天',
   },
+  Geography: {
+    name: '地理',
+    icon: Globe,
+    color: '#4f9c94',
+    soft: '#ebf5f4',
+    description: '认识山川与世界，理解人与环境',
+  },
   Computing: {
     name: '计算机',
     icon: Monitor,
@@ -72,6 +80,18 @@ export const subjectMeta = {
 } as const
 
 const domains: Record<string, string> = {
+  'Algorithms & Programming': '算法与编程',
+  'Data Representation': '数据表示',
+  'Designing Digital Solutions': '数字化方案设计',
+  'Digital Systems': '数字系统',
+  'Digital Tools & Collaboration': '数字工具与协作',
+  'Privacy & Security': '隐私与安全',
+  'Maps & Spatial Skills': '地图与空间技能',
+  'Places & Environments': '地点与环境',
+  'Family & Community History': '家庭与社区历史',
+  'Modern History': '近现代史',
+  'Food & Cooking': '食物与烹饪',
+  'Design & Technology': '设计与技术',
   'Addition & Subtraction': '加法与减法',
   Algebra: '代数',
   'Ancient Egypt': '古埃及',
